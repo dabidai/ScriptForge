@@ -3,6 +3,7 @@ package com.scriptforge.service;
 import com.scriptforge.exception.BusinessException;
 import com.scriptforge.mapper.ChapterMapper;
 import com.scriptforge.mapper.NovelMapper;
+import com.scriptforge.model.dto.ChapterDto;
 import com.scriptforge.model.dto.UploadResultDto;
 import com.scriptforge.model.entity.Chapter;
 import com.scriptforge.model.entity.Novel;
@@ -11,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,6 +23,7 @@ public class NovelService {
     private final NovelMapper novelMapper;
     private final ChapterMapper chapterMapper;
     private final ChapterSplitter chapterSplitter;
+    private final List<NovelTextExtractor> extractors;
 
     public UploadResultDto upload(MultipartFile file) {
         String originalName = file.getOriginalFilename();
@@ -32,17 +32,13 @@ public class NovelService {
         }
 
         String ext = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
-        if (!ext.equals("txt") && !ext.equals("md")) {
-            throw new BusinessException("仅支持 TXT/MD 格式文件");
-        }
+        NovelTextExtractor extractor = extractors.stream()
+                .filter(e -> e.supports(ext))
+                .findFirst()
+                .orElseThrow(() -> new BusinessException("仅支持 TXT/MD/EPUB 格式文件"));
 
-        String content;
-        try {
-            content = new String(file.getBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new BusinessException("文件读取失败: " + e.getMessage());
-        }
-
+        var extracted = extractor.extract(file);
+        String content = extracted.text();
         if (content.isBlank()) {
             throw new BusinessException("文件内容为空");
         }
@@ -58,7 +54,11 @@ public class NovelService {
                 .build();
 
         novelMapper.insert(novel);
-        var chapters = chapterSplitter.split(content);
+
+        // EPUB 等自带章节结构的格式直接用结构化章节，TXT/MD 走正则分章
+        List<ChapterDto> chapters = (extracted.chapters() != null && !extracted.chapters().isEmpty())
+                ? extracted.chapters()
+                : chapterSplitter.split(content);
 
         // 持久化章节到 DB，去除内容中的 Markdown 标题行
         for (var ch : chapters) {
