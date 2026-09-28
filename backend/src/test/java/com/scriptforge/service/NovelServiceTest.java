@@ -89,4 +89,21 @@ class NovelServiceTest {
 
         assertNotEquals(r1.novelId(), r2.novelId());
     }
+
+    @Test
+    void shouldUploadEpubFile() {
+        var file = new MockMultipartFile(
+                "file", "小说.epub", "application/epub+zip", new TestEpub()
+                .chapter("c1", "chapter1.xhtml", "第一章 初入江湖", "少年背着剑走出山村。")
+                .chapter("c2", "chapter2.xhtml", "第二章 长安夜雨", "夜色下的长安城灯火通明。")
+                .build());
+
+        var result = novelService.upload(file);
+
+        assertEquals("小说.epub", result.fileName());
+        // EPUB 按 spine 结构分章，不走正则
+        assertEquals(2, result.chapters().size());
+        assertEquals("第一章 初入江湖", result.chapters().get(0).title());
+        assertTrue(result.totalChars() > 0);
+    }
 }

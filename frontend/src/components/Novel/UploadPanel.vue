@@ -12,7 +12,7 @@
       <input
         ref="fileInput"
         type="file"
-        accept=".txt,.md"
+        accept=".txt,.md,.epub"
         class="file-input"
         @change="onFileChange"
       />
@@ -26,7 +26,7 @@
         <p class="upload-text">
           拖拽小说文件到此处，或<span class="link">点击选择文件</span>
         </p>
-        <p class="upload-hint">支持 .txt / .md 格式，最大 10MB</p>
+        <p class="upload-hint">支持 .txt / .md / .epub 格式，最大 10MB</p>
       </div>
     </div>
 
@@ -105,8 +105,8 @@ function onFileChange() {
 
 async function handleFile(file: File) {
   const ext = file.name.split(".").pop()?.toLowerCase();
-  if (ext !== "txt" && ext !== "md") {
-    error.value = "仅支持 .txt / .md 格式";
+  if (ext !== "txt" && ext !== "md" && ext !== "epub") {
+    error.value = "仅支持 .txt / .md / .epub 格式";
     return;
   }
 

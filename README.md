@@ -13,7 +13,7 @@
 
 | 功能 | 说明 |
 |------|------|
-| 小说上传与分章 | 支持 TXT/MD，自动识别"第X章""Chapter X"等多种模式 |
+| 小说上传与分章 | 支持 TXT/MD/EPUB；EPUB 按书籍 spine 结构精准分章，TXT/MD 自动识别"第X章""Chapter X"等多种模式 |
 | LLM 逐章转换 | 调用 DeepSeek/Qwen 将小说转为结构化 YAML 剧本（两阶段：生成 + 去 AI 味润色） |
 | YAML Schema 校验 | 校验 LLM 输出是否符合 Schema，失败自动重试（最多 2 次） |
 | 章节合并输出 | 多章合并为完整剧本，可下载 YAML |
@@ -25,7 +25,7 @@
 
 ```mermaid
 graph LR
-    A[用户上传 TXT/MD] --> B[NovelController]
+    A[用户上传 TXT/MD/EPUB] --> B[NovelController]
     B --> C[RegexChapterSplitter 分章]
     C --> D[ScriptService 编排]
     D --> E[ScriptConverter]
@@ -91,13 +91,14 @@ docker compose up -d
 | mybatis-plus-spring-boot3-starter | ORM 数据库操作 | 3.5.7 |
 | sqlite-jdbc | SQLite 数据库驱动 | 3.46.1.0 |
 | jackson-dataformat-yaml | YAML 序列化/反序列化 | - |
+| jsoup | EPUB 内 XHTML 解析（剥离 HTML 标签提取正文） | 1.17.2 |
 | lombok | 减少样板代码 | - |
 | vue | 前端框架 | 3.4 |
 | vue-router | 前端路由 | 4.3 |
 | axios | HTTP 请求 | 1.7 |
 | monaco-editor | 代码编辑器 | 0.52 |
 
-功能模块：ChapterSplitter（分章引擎）、ScriptConverter（LLM 转换管道）、YamlValidator（Schema 校验）、PromptBuilder（Prompt 模板）、UploadPanel（前端上传组件）、ConvertView（转换交互）、ViewerView（对比展示）。
+功能模块：NovelTextExtractor（文本提取策略：TXT/MD/EPUB）、ChapterSplitter（分章引擎）、ScriptConverter（LLM 转换管道）、YamlValidator（Schema 校验）、PromptBuilder（Prompt 模板）、UploadPanel（前端上传组件）、ConvertView（转换交互）、ViewerView（对比展示）。
 
 ## API 文档
 
